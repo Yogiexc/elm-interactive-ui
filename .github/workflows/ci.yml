@@ -1,0 +1,67 @@
+name: Elm CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v3
+    
+    - name: 🔧 Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    
+    - name: 📦 Install Elm
+      run: npm install -g elm
+    
+    - name: 🏗️ Compile Elm
+      run: elm make src/Main.elm --output=elm.js
+    
+    - name: ✅ Check if elm.js exists
+      run: |
+        if [ -f elm.js ]; then
+          echo "✅ Build successful!"
+          ls -lh elm.js
+        else
+          echo "❌ Build failed!"
+          exit 1
+        fi
+    
+    - name: 📊 Build optimized version
+      run: elm make src/Main.elm --output=elm.min.js --optimize
+    
+    - name: 📤 Upload artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: elm-build
+        path: |
+          elm.js
+          elm.min.js
+          index.html
+
+  # Optional: Deploy to GitHub Pages
+  # deploy:
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   if: github.ref == 'refs/heads/main'
+  #   
+  #   steps:
+  #   - uses: actions/checkout@v3
+  #   - uses: actions/setup-node@v3
+  #     with:
+  #       node-version: '18'
+  #   - run: npm install -g elm
+  #   - run: elm make src/Main.elm --output=elm.js --optimize
+  #   - name: Deploy to GitHub Pages
+  #     uses: peaceiris/actions-gh-pages@v3
+  #     with:
+  #       github_token: ${{ secrets.GITHUB_TOKEN }}
+  #       publish_dir: ./
